@@ -1,20 +1,20 @@
 # TaskFlow Pro
 
-TaskFlow Pro is a smart project management application built with a React frontend and an Express/Prisma/PostgreSQL backend. It features an automated Directed Acyclic Graph (DAG) scheduling engine that dynamically shifts task dates based on dependencies, as well as AI-powered features for dependency suggestion and natural-language "What-If" simulations powered by Google Gemini.
+TaskFlow Pro is a smart project management application built with a React frontend and an Express/Prisma/PostgreSQL backend. It features an automated Directed Acyclic Graph (DAG) scheduling engine that dynamically shifts task dates based on dependencies, as well as AI-powered features for dependency suggestion and natural-language "What-If" simulations powered by Groq.
 
 ## Setup Steps
 
 ### Prerequisites
 - Node.js (v18+)
 - PostgreSQL (running locally)
-- A Google Gemini API Key
+- A Groq API Key
 
 ### 1. Environment Variables
 In the `server` directory, create a `.env` file (or update the existing one) with:
 ```env
 DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/taskflow?schema=public"
 PORT=3001
-GEMINI_API_KEY="your_actual_gemini_api_key_here"
+GROQ_API_KEY="your_groq_api_key_here"
 ```
 
 ### 2. Database Migrations & Seeding
@@ -47,7 +47,7 @@ The application consists of a decoupled frontend and backend:
 - **Frontend (Client)**: A Vite + React application using `@dnd-kit` for drag-and-drop kanban functionality. It communicates with the backend via standard REST APIs. State is managed via React hooks.
 - **Backend (Server)**: An Express server handling REST endpoints. Data persistence is managed via Prisma ORM connected to PostgreSQL.
 - **DAG Engine**: A core service (`server/services/dagEngine.js`) containing pure functions that calculate the critical path, block/unblock downstream tasks, and propagate date shifts efficiently across multiple levels without compounding delays.
-- **AI Service**: Integrates with the Google Gemini API to analyze task context, providing deterministic JSON arrays for dependency suggestions and translating natural-language queries into explicit "What-If" simulation parameters.
+- **AI Service**: Integrates with Groq's OpenAI-compatible Chat Completions API. AI is used for dependency suggestions and natural-language What-If parsing. The deterministic DAG engine remains authoritative for dependency validation and scheduling.
 
 ## Data Model
 - **Tasks**: Represents individual work items. Attributes include `title`, `description`, `status` (backlog, in_progress, review, done), `duration_days`, and computed start/end dates.
@@ -64,4 +64,4 @@ The application consists of a decoupled frontend and backend:
 ## Known Failure Cases
 - **Concurrent Edits**: Since there are no optimistic locks or real-time web sockets (like Socket.io), if two users drag-and-drop tasks or add dependencies simultaneously, they may overwrite each other's changes or create inconsistent local states until the page is refreshed.
 - **Large Graph Constraints**: For heavily interconnected graphs with thousands of nodes, the recursive DAG calculations inside Node.js might cause event-loop blocking, slowing down API responses.
-- **API Rate Limiting**: Extensive use of AI features may result in 503 "High Demand" or 429 "Too Many Requests" errors from the Gemini API. The system currently mitigates this with basic retries, but sustained usage may temporarily stall AI features.
+- **API Rate Limiting**: Extensive use of AI features may result in 503 "High Demand" or 429 "Too Many Requests" errors from the Groq API. The system currently mitigates this with basic retries, but sustained usage may temporarily stall AI features.
