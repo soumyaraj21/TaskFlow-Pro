@@ -1,0 +1,83 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TaskStatus {
+  backlog
+  in_progress
+  review
+  done
+}
+
+enum DependencySource {
+  manual
+  ai_suggested
+}
+
+enum SuggestionStatus {
+  pending
+  accepted
+  rejected
+}
+
+model tasks {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String?
+  status          TaskStatus
+  start_date      DateTime?
+  end_date        DateTime?
+  duration_days   Int?
+  column_position Int?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  predecessors    dependencies[] @relation("predecessor")
+  successors      dependencies[] @relation("successor")
+  ai_suggestions_for  ai_suggestions[] @relation("task")
+  ai_suggestions_as_pred ai_suggestions[] @relation("suggested_predecessor")
+  audit_logs      audit_log[]
+}
+
+model dependencies {
+  id             Int      @id @default(autoincrement())
+  predecessor_id Int
+  successor_id   Int
+  lag_days       Int      @default(0)
+  source         DependencySource
+  created_at     DateTime @default(now())
+
+  predecessor    tasks    @relation("predecessor", fields: [predecessor_id], references: [id])
+  successor      tasks    @relation("successor", fields: [successor_id], references: [id])
+
+  @@unique([predecessor_id, successor_id])
+}
+
+model ai_suggestions {
+  id                       Int      @id @default(autoincrement())
+  task_id                  Int
+  suggested_predecessor_id Int
+  confidence               Float
+  rationale                String?
+  status                   SuggestionStatus
+  created_at               DateTime @default(now())
+
+  task                     tasks    @relation("task", fields: [task_id], references: [id])
+  suggested_predecessor    tasks    @relation("suggested_predecessor", fields: [suggested_predecessor_id], references: [id])
+}
+
+model audit_log {
+  id          Int      @id @default(autoincrement())
+  task_id     Int
+  change_type String
+  old_value   Json?
+  new_value   Json?
+  timestamp   DateTime @default(now())
+
+  task        tasks    @relation(fields: [task_id], references: [id])
+}

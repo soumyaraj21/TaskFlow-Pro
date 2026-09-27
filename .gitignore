@@ -1,0 +1,19 @@
+.env
+.env.*
+server/.env
+client/.env
+client/.env.*
+node_modules/
+dist/
+build/
+.DS_Store
+.agents/
+# AI/IDE development metadata
+.agents/
+.claude/
+.cursor/
+.devin/
+**/.agents/
+**/.claude/
+**/.cursor/
+**/.devin/
